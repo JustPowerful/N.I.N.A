@@ -2,7 +2,6 @@ from fastapi import FastAPI
 
 from app.api.routes.chat import router as chat_router
 
-
 app = FastAPI(
     title="N.I.N.A Assistant Core API",
     version="0.1.0",

@@ -1,10 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pydantic import Field
 class Settings(BaseSettings):
-    openai_api_key: str | None = None # API key for OPENAI (or compatible OPENAI API)
-    openai_base_url: str | None = None # Base URL for OPENAI (or compatible OPENAI API)
+    openai_api_key: str = Field(default=...)
+    openai_base_url: str = Field(default=...)
+    
     model: str = "nvidia/nemotron-3.5-lightning:free" # default model (you can change it later)
+    embedding_model: str = "nvidia/nemotron-3-embed-1b:free" # default model (you can change it later)
 
+    # database related stuff
+    database_url: str = Field(default=...)
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -13,8 +17,3 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-if not settings.openai_api_key:
-    raise ValueError("OPENAI_API_KEY is not set in the environment variables.")
-
-if not settings.openai_base_url:
-    raise ValueError("OPENAI_BASE_URL is not set in the environment variables.")

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: nina-postgres
+    environment:
+      POSTGRES_USER: nina
+      POSTGRES_PASSWORD: nina
+      POSTGRES_DB: nina
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - nina-network
+
+networks:
+  nina-network:
+    driver: bridge
+
+volumes:
+  pgdata:
