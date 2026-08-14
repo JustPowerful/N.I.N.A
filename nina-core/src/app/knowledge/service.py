@@ -42,5 +42,30 @@ class KnowledgeService:
         return result.scalars().all()
 
 
+    async def delete(self, knowledge_id: int) -> bool:
+        knowledge = await self.session.get(Knowledge, knowledge_id)
+        if knowledge is None:
+            return False
+        await self.session.delete(knowledge)
+        await self.session.commit()
+        return True
+
+
+    async def update(self, knowledge_id: int, content: str) -> Knowledge | None:
+        knowledge = await self.session.get(Knowledge, knowledge_id)
+        if knowledge is None:
+            return None
+        new_embedding = await self.embeddingServie.embed(content)
+        knowledge.content = content
+        knowledge.embedding = new_embedding
+        await self.session.commit()
+        await self.session.refresh(knowledge)
+        return knowledge
+
+
+        
+    
+
+
 async def get_knowledge_service(session: AsyncSession = Depends(get_session)):
     return KnowledgeService(embeddingService=get_embedding_service(), session=session)
