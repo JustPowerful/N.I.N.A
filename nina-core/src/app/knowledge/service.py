@@ -8,6 +8,7 @@ from fastapi import Depends
 from app.db.engine import get_session
 
 class KnowledgeService:
+    
     def __init__(
             self,
             embeddingService: EmbeddingService,
@@ -61,10 +62,6 @@ class KnowledgeService:
         await self.session.commit()
         await self.session.refresh(knowledge)
         return knowledge
-
-
-        
-    
 
 
 async def get_knowledge_service(session: AsyncSession = Depends(get_session)):

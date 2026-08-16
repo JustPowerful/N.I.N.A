@@ -1,7 +1,5 @@
-from app.knowledge.service import KnowledgeService, get_knowledge_service
+from app.knowledge.service import KnowledgeService
 from app.agent.tool import Tool
-from functools import lru_cache 
-
 
 class KnowledgeTools:
     def __init__(self, knowledgeService: KnowledgeService) -> None:
@@ -62,6 +60,24 @@ class KnowledgeTools:
     def get_tools(self) -> list[Tool]:
         return [
             Tool(
+                name='search_knowledge',
+                description='Get important information from NINA\'s long-term memory',
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Information to search.",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Number of results to return.",
+                        }
+                    }
+                },
+                function=self.search_knowledge
+            ),
+            Tool(
                 name='save_knowledge',
                 description="""
                 Store a new piece of information in the user's knowledge base.
@@ -83,24 +99,6 @@ class KnowledgeTools:
                     "required": ["content"],
                 },
                 function=self.save_knowledge
-            ),
-            Tool(
-                name='search_knowledge',
-                description='Get important information from NINA\'s long-term memory',
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Information to search.",
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "description": "Number of results to return.",
-                        }
-                    }
-                },
-                function=self.search_knowledge
             ),
             Tool(
                 name='delete_knowledge',

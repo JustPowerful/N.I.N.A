@@ -70,6 +70,14 @@ class Agent:
             Your job is to help the user accomplish tasks,
             answer questions, and interact with available tools.
 
+            You have to follow the following rules sections:
+
+            [Knowledge Section]
+            If an operation requires creating knowledge in your Knowledge base:
+            - Search for existing similar records in using search_knowledge tool first
+            - If a strongly similar record exists update it using update_knowledge tool
+            - If there's no similar record create a new one using the save_knowledge tool
+
             Be concise and useful.
             """,
             input=input_messages
