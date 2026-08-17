@@ -26,7 +26,6 @@ class GetSessionDetailsResponse(BaseModel):
     created_at: str
     updated_at: str
 
-
 @router.post('/create', response_model=CreateSessionResponse)
 async def create_session(request: CreateSessionRequest, session_service: SessionService = Depends(get_session_service)):
     session = await session_service.create_session(title=request.title)

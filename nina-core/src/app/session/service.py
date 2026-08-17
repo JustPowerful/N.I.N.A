@@ -27,6 +27,8 @@ class SessionService:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
+    # This is usually used to fetch messages in UI chat systems for user readability
+    # WARNING: don't pass all the messages to the agent, this will be token consuming
     async def get_session_messages(self, session_uuid: str) -> List[ChatMessage]:
         """Fetch chronologically ordered messages for a session"""
         stmt = (
@@ -36,6 +38,20 @@ class SessionService:
         )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    # Instead of using get_session_messages we can use something like get_session_n_last_messages
+    # Note that the messages should be formatted to the way the agent client understands it
+    async def get_session_n_last_messages(self, session_uuid: str, n: int) -> List[ChatMessage]:
+        """Fetch the last n messages for a session"""
+        stmt = (
+            select(ChatMessage)
+            .where(ChatMessage.session_id == session_uuid)
+            .order_by(ChatMessage.created_at.desc())
+            .limit(n)
+        )
+        result = await self.db.execute(stmt)
+        messages = list(result.scalars().all())
+        return list(reversed(messages))  # Reverse to maintain chronological order
 
 
     async def add_message(self, session_uuid: str, role: MessageRole, content: str) -> ChatMessage:
