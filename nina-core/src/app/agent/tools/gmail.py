@@ -5,7 +5,7 @@ class GmailTools:
     def __init__(self, gmail_service: GmailService):
         self.gmail_service = gmail_service
 
-    async def search_emails(self, query: str, limit: int):
+    def search_emails(self, query: str, limit: int):
         """
         Search for emails in the user's Gmail account based on a query.
 
@@ -14,12 +14,25 @@ class GmailTools:
             limit: The maximum number of email results to return.
         """
 
-        results = await self.gmail_service.search_messages(query=query, max_results=limit)
+        results = self.gmail_service.search_messages(query=query, max_results=limit)
         return results
+
 
 
         # TODO: implement mail sending functionality
 
+    def send_email(self, to: str, subject: str, body: str):
+        """
+        Send an email using the user's Gmail account.
+
+        Args:
+            to: The recipient's email address.
+            subject: The subject of the email.
+            body: The body content of the email.
+        """
+        
+        result = self.gmail_service.send_email(to=to, subject=subject, body=body)
+        return result
 
     def get_tools(self) -> list[Tool]:
         return [
@@ -40,5 +53,27 @@ class GmailTools:
                     },
                 },
                 function=self.search_emails
+            ),
+            Tool(
+                name='send_email',
+                description='Send an email using the user\'s Gmail account.',
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "to": {
+                            "type": "string",
+                            "description": "The recipient's email address."
+                        },
+                        "subject": {
+                            "type": "string",
+                            "description": "The subject of the email."
+                        },
+                        "body": {
+                            "type": "string",
+                            "description": "The body content of the email."
+                        }
+                    },
+                },
+                function=self.send_email
             )
         ]

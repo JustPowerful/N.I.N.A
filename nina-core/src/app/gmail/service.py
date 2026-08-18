@@ -5,9 +5,16 @@ from google.oauth2.credentials import Credentials
 from google.auth.external_account_authorized_user import Credentials as ExternalAccountCredentials
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
+# For email sending
+import base64
+from email.message import EmailMessage
 
 class GmailService:
-    SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+    SCOPES = [
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.send",
+    ]
+    
     BASE_DIR = BASE_DIR = Path(__file__).resolve().parents[3] # Adjust the path to point to the root of your project
     CREDENTIALS_DIR = BASE_DIR / "credentials"
     CLIENT_SECRET_FILE = CREDENTIALS_DIR / "client_secret.json"
@@ -62,7 +69,7 @@ class GmailService:
 
         return credentials
 
-    async def search_messages(
+    def search_messages(
         self,
         query: str = "",
         max_results: int = 5      
@@ -129,10 +136,46 @@ class GmailService:
                     f"Snippet: {detail.get('snippet', '')}\n"
                 )
 
-                return "\n".join(output)
+            return "\n".join(output)
             
         except Exception as e:
             return f"An error occurred during search: {e}"
             
+
+    def send_email(
+            self,
+            to: str,
+            subject: str,
+            body: str
+    ):
+        try:
+            message = EmailMessage()
+            message["To"] = to
+            message["Subject"] = subject
+            message.set_content(body)
+
+            encoded_message = base64.urlsafe_b64encode(
+                message.as_bytes()
+            ).decode()
+
+            result = (
+                self.service
+                .users()
+                .messages()
+                .send(
+                    userId="me",
+                    body={"raw": encoded_message}
+                )
+                .execute()
+            )
+
+            return (
+                f"Email sent successfully. "
+                f"Message ID: {result['id']}"
+            )
+            
+        except Exception as e:
+            return f"An error occurred while sending email: {e}"
+
 def get_gmail_service() -> GmailService:
     return GmailService()
