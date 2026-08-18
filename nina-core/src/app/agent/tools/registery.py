@@ -1,18 +1,21 @@
 
 from .knowledge import KnowledgeTools, KnowledgeService
+from .gmail import GmailTools, GmailService
 from app.embeddings.service import get_embedding_service
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class ToolsRegistery:
-    def __init__(self, knowledge_tools: KnowledgeTools) -> None:
+    def __init__(self, knowledge_tools: KnowledgeTools, gmail_tools: GmailTools) -> None:
         self.knowledge_tools = knowledge_tools
+        self.gmail_tools = gmail_tools
 
     
     # (*) used to get all tools and flatten the list of tools from each tool class into a single list
     # (*) is like ... in javascript
     def get_tools(self):
         return [
-            *self.knowledge_tools.get_tools()
+            *self.knowledge_tools.get_tools(),
+            *self.gmail_tools.get_tools()
         ]
 
 def get_tools_registery(session: AsyncSession):
@@ -25,6 +28,12 @@ def get_tools_registery(session: AsyncSession):
         knowledgeService=knowledge_service
     )
 
+    gmail_service = GmailService()
+    gmail_tools = GmailTools(
+        gmail_service=gmail_service
+    )
+
     return ToolsRegistery(
         knowledge_tools=knowledge_tools,
+        gmail_tools=gmail_tools
     )

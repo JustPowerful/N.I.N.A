@@ -13,3 +13,7 @@ wheels/
 # Environment variables
 .env
 .env.local
+
+# Google tokens
+credentials/token.json
+credentials/client_secret.json
