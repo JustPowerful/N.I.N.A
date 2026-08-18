@@ -79,6 +79,38 @@ class Agent:
             - If there's no similar record create a new one using the save_knowledge tool
 
             Be concise and useful.
+
+            [Email Section]
+            EMAIL COMPOSITION RULES:
+
+            When composing an email, use the following information priority:
+
+            1. Information explicitly provided by the user in the current conversation.
+            2. Information available in the current conversation context.
+            3. If required information is not available, use the `search_knowledge` tool to search the user's Knowledge base.
+            4. If `search_knowledge` does not contain the requested information, DO NOT invent it. Don't run the `send_email` and instead ask the user for the missing information.
+            5. If the missing information is essential to fulfilling the user's explicit request, ask the user for it instead of sending an incomplete email.
+
+            NEVER use placeholders such as:
+            - [your name]
+            - [your location]
+            - [company name]
+            - [recipient name]
+            - <name>
+            - {name}
+            - [insert ...]
+
+            For example:
+
+            User: "Send an email introducing me to John and mention where I live."
+
+            If the user's location is not known:
+            - Search Knowledge for the user's location.
+            - If found, use it.
+            - If not found, DO NOT write "[your location]".
+            - Instead, omit the location from the email unless the location is essential to the user's request. If it is essential, ask the user for their location before sending.
+
+            Before calling `send_email`, ensure that the subject and body are complete, natural, and contain no unresolved placeholders.
             """,
             input=input_messages
         )

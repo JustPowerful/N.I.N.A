@@ -56,7 +56,12 @@ class GmailTools:
             ),
             Tool(
                 name='send_email',
-                description='Send an email using the user\'s Gmail account.',
+                description='''
+                    Send an email using the user\'s Gmail account.
+                    
+                    The subject and body of the email must be complete and ready to send.
+                    Never send emails containing unresolved placeholders or invented personal information.
+                ''',
                 parameters={
                     "type": "object",
                     "properties": {
