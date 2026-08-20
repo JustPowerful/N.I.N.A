@@ -14,9 +14,10 @@ class CreateSessionResponse(BaseModel):
 class DeleteSessionResponse(BaseModel):
     response: str
 
-class GetMessagesResponse(BaseModel):
+
+class GetAllSessionsResponse(BaseModel):
     response: str
-    messages: list
+    sessions: list
 
 
 class GetSessionDetailsResponse(BaseModel):
@@ -30,6 +31,15 @@ class GetSessionDetailsResponse(BaseModel):
 async def create_session(request: CreateSessionRequest, session_service: SessionService = Depends(get_session_service)):
     session = await session_service.create_session(title=request.title)
     return CreateSessionResponse(session_id=session.id, response="Successfully created a new session")
+
+@router.get('/all', response_model=GetAllSessionsResponse)
+async def get_all_sessions(session_service: SessionService = Depends(get_session_service)):
+    sessions = await session_service.get_all_session()
+    response = [{
+        "id": session.id,
+        "title": session.title,
+    } for session in sessions]
+    return GetAllSessionsResponse(sessions=response, response="Successfully fetched all sessions")
 
 @router.get("/details/{session_id}", response_model=GetSessionDetailsResponse)
 async def get_session_details(session_id: str, session_service: SessionService = Depends(get_session_service)):
@@ -52,10 +62,3 @@ async def delete_session(session_id: str, session_service: SessionService = Depe
     else:
         raise HTTPException(status_code=404, detail=f"Session with ID {session_id} not found")
 
-@router.get("/getmessages/{session_id}", response_model=GetMessagesResponse)
-async def get_messages(session_id: str, session_service: SessionService = Depends(get_session_service)):
-    messages = await session_service.get_session_messages(session_id)
-    return GetMessagesResponse(
-        response=f"Successfully fetched messages for session {session_id}",
-        messages=messages
-    )
