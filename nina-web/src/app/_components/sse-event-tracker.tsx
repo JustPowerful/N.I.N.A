@@ -71,7 +71,9 @@ const SseEventTracker = ({ sessionId }: { sessionId: string }) => {
         }
       }
     };
-    connectToSse();
+    if (sessionId) {
+      connectToSse();
+    }
   }, [sessionId]);
   return (
     <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
