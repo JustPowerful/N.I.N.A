@@ -1,7 +1,8 @@
 from openai import AsyncOpenAI
-from app.agent.state import AgentState
+from app.agent.state import AgentState, AgentEvent, AgentEventState
 from app.config import settings
 from openai.types.responses import ResponseInputParam
+
 from app.agent.tools.registery import ToolsRegistery
 import json
 
@@ -21,7 +22,21 @@ class Agent:
             Be concise and useful.
             """,
 
-    async def execute_tool(self, tool_name: str, arguments: str):
+    async def emit(
+        self,
+        event_handler,
+        event_type: str,
+        data: dict,
+    ):
+        if event_handler:
+            await event_handler(
+                AgentEvent(
+                    type=event_type,
+                    data=data,
+                )
+            )
+
+    async def execute_tool(self, tool_name: str, arguments: str, call_id: str,event_handler=None):
         tool = next((tool for tool in self.tools if tool.name == tool_name), None)
 
         if tool is None:
@@ -34,9 +49,31 @@ class Agent:
                 f"Invalid arguments for tool '{tool_name}': {arguments}"
             ) from e
 
+        await self.emit(
+            event_handler=event_handler,
+            event_type=AgentEventState.TOOL_STARTED,
+            data={
+                "tool": tool_name,
+                "call_id": call_id,
+                "arguments": parsed_arguments
+            }
+        )
+
+        
+
         result = tool.function(**parsed_arguments)
         if hasattr(result, "__await__"):
             result = await result
+
+        await self.emit(
+            event_handler=event_handler,
+            event_type=AgentEventState.TOOL_EXECUTED,
+            data={
+                "tool": tool_name,
+                "call_id": call_id,
+                "result": result
+            }
+        )
 
         return result
 
@@ -52,7 +89,8 @@ class Agent:
         ]
     
 
-    async def run(self, state: AgentState) -> str:
+    async def run(self, state: AgentState, event_handler=None) -> str:
+        
         print("[DEBUG] Agent.run called with state:", state)
         input_messages: ResponseInputParam = [
             {
@@ -140,7 +178,9 @@ class Agent:
 
                 result = await self.execute_tool(
                                     tool_name=tool_call.name,
-                                    arguments=tool_call.arguments
+                                    arguments=tool_call.arguments,
+                                    call_id=tool_call.call_id,
+                                    event_handler=event_handler
                                 )
 
                 input_messages.append({

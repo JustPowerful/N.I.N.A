@@ -1,8 +1,16 @@
+import asyncio
+import json
+
 from fastapi import APIRouter, Depends
 
 from app.agent.service import AgentService, get_agent_service
+from app.agent.state import AgentEvent
 from app.session.service import SessionService, get_session_service, MessageRole
 from pydantic import BaseModel
+from app.agent.eventmanager import event_manager
+
+# Import ServerSentEvent from sse_starlette
+from sse_starlette import ServerSentEvent, EventSourceResponse
 
 router = APIRouter(prefix='/chat', tags=['chat'])
 
@@ -17,6 +25,22 @@ class ChatResponse(BaseModel):
 class GetMessagesResponse(BaseModel):
     response: str
     messages: list
+
+
+@router.get("/events/{session_id}")
+async def events(session_id: str):
+    queue = event_manager.subscribe(session_id)
+
+    async def event_stream():
+        try:
+            while True:
+                event: AgentEvent = await queue.get()
+                payload = json.dumps(event.data) if event.data is not None else "{}"
+                yield ServerSentEvent(event=event.type, data=payload)
+        finally:
+            event_manager.unsubscribe(session_id, queue)
+
+    return EventSourceResponse(event_stream())
 
 @router.post("/send", response_model=ChatResponse)
 async def chat(

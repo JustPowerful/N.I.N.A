@@ -1,6 +1,7 @@
 from app.agent.engine import Agent, get_agent
 from app.session.service import SessionService, get_session_service, MessageRole
-from app.agent.state import AgentState, Message, MessageRole as AgentMessageRole
+from app.agent.state import AgentState, Message, MessageRole as AgentMessageRole, AgentEvent
+from app.agent.eventmanager import event_manager
 from app.agent.tools.registery import get_tools_registery
 from app.db.engine import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,7 @@ class AgentService:
         if val in ("user", "assistant", "system", "developer"):
             return cast(AgentMessageRole, val)
         raise ValueError(f"Invalid message role: {raw_role}")
-    
+
     async def chat(self, message: str, session_uuid: str) -> str:
         print("[DEBUG] AgentService.chat called with message:", message, "and session_uuid:", session_uuid)
 
@@ -43,8 +44,12 @@ class AgentService:
 
         # Message accept 'user' and not MessageRole.USER because it's a separate model for the agent state, not the session enum logic
         state = AgentState(messages=state_messages)
+
+        async def event_handler(event: AgentEvent):
+            await event_manager.publish(session_id=session_uuid, event=event)
+
         
-        result = await self.agent.run(state)
+        result = await self.agent.run(state, event_handler=event_handler)
         await self.session_service.add_message(session_uuid=session_uuid, role=MessageRole.ASSISTANT, content=result)
         return result
 

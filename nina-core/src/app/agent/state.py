@@ -22,4 +22,16 @@ class Message:
 class AgentState:
     messages: list[Message] = field(default_factory=list)
 
+@dataclass
+class AgentEvent:
+    type: str
+    data: dict
+
+class AgentEventState:
+    AGENT_STARTED = "agent.started"
+    TOOL_STARTED = "agent.tool_started"
+    TOOL_EXECUTED = "agent.tool_executed"
+    TOOL_FAILED = "agent.tool_failed"
+    AGENT_COMPLETED = "agent.completed"
+    
 
