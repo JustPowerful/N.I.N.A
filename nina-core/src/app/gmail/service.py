@@ -18,7 +18,7 @@ class GmailService:
     BASE_DIR = BASE_DIR = Path(__file__).resolve().parents[3] # Adjust the path to point to the root of your project
     CREDENTIALS_DIR = BASE_DIR / "credentials"
     CLIENT_SECRET_FILE = CREDENTIALS_DIR / "client_secret.json"
-    TOKEN_FILE = CREDENTIALS_DIR / "token.json"
+    TOKEN_FILE = CREDENTIALS_DIR / "gmail_token.json"
 
 
     def __init__(self) -> None:

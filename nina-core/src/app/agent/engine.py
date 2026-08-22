@@ -5,6 +5,7 @@ from openai.types.responses import ResponseInputParam
 
 from app.agent.tools.registery import ToolsRegistery
 import json
+from datetime import datetime
 
 class Agent:
     def __init__(self, tools_registery: ToolsRegistery):
@@ -48,6 +49,17 @@ class Agent:
             raise ValueError(
                 f"Invalid arguments for tool '{tool_name}': {arguments}"
             ) from e
+
+        # Convert datetime strings to datetime objects based on tool schema
+        for param_name, param_value in parsed_arguments.items():
+            if param_name in tool.parameters.get("properties", {}):
+                param_schema = tool.parameters["properties"][param_name]
+                if param_schema.get("format") == "date-time" and isinstance(param_value, str):
+                    try:
+                        # Parse ISO 8601 datetime string
+                        parsed_arguments[param_name] = datetime.fromisoformat(param_value.replace('Z', '+00:00'))
+                    except (ValueError, AttributeError):
+                        pass  # Keep original value if parsing fails
 
         await self.emit(
             event_handler=event_handler,
@@ -99,10 +111,12 @@ class Agent:
             } for message in state.messages
         ]
 
+        now = datetime.now().astimezone()
+
         response = await self.client.responses.create(
             model=settings.model,
             tools=self.get_openai_tools(),
-            instructions="""
+            instructions=f"""
             You are NINA, a personal AI assistant.
 
             Your job is to help the user accomplish tasks,
@@ -135,7 +149,6 @@ class Agent:
             - [company name]
             - [recipient name]
             - <name>
-            - {name}
             - [insert ...]
 
             For example:
@@ -149,6 +162,19 @@ class Agent:
             - Instead, omit the location from the email unless the location is essential to the user's request. If it is essential, ask the user for their location before sending.
 
             Before calling `send_email`, ensure that the subject and body are complete, natural, and contain no unresolved placeholders.
+
+            [Calendar Section]
+            CURRENT DATE AND TIME: 
+            {now.isoformat()}
+
+            CURRENT YEAR:
+            {now}
+
+            IMPORTANT DATE RULES:
+            - The current date and time is provided above. Use it as a reference for scheduling and date-related tasks.
+            - When the user says "tomorrow", "next Monday", "next week", etc., resolve the date relative to the CURRENT DATE AND TIME above.
+            - When the user gives a date without a year, use the year that is appropriate relative to the current date.
+            - Before creating a calendar event, verify that the resulting date is consistent with the current date.
             """,
             input=input_messages
         )

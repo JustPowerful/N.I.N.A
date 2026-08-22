@@ -15,5 +15,5 @@ wheels/
 .env.local
 
 # Google tokens
-credentials/token.json
+credentials/*_token.json
 credentials/client_secret.json
