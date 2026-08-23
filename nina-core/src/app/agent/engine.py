@@ -175,6 +175,16 @@ class Agent:
             - When the user says "tomorrow", "next Monday", "next week", etc., resolve the date relative to the CURRENT DATE AND TIME above.
             - When the user gives a date without a year, use the year that is appropriate relative to the current date.
             - Before creating a calendar event, verify that the resulting date is consistent with the current date.
+
+
+            [Browser Section]
+            When using browser tools:
+           
+            - `content` contains textual information visible on the current webpage. Read and use it when answering questions or deciding what to do next.
+            - `elements` contains interactive elements that can be acted upon using their element IDs.
+            - Do not assume that information must be represented by an interactive element. Important information may exist only in `content`.
+            - Use `content` to understand the page and `elements` to interact with it.
+            - After performing a browser action, inspect the returned page observation before deciding the next action.
             """,
             input=input_messages
         )

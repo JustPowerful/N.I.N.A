@@ -17,3 +17,6 @@ wheels/
 # Google tokens
 credentials/*_token.json
 credentials/client_secret.json
+
+# Ignore Playwright's data folder
+data/
