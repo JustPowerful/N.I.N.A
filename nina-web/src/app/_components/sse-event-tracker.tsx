@@ -76,10 +76,10 @@ const SseEventTracker = ({ sessionId }: { sessionId: string }) => {
     }
   }, [sessionId]);
   return (
-    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+    <div className="sticky w-fit bottom-px left-1/2 -translate-x-1/2 z-10">
       <ul className="space-y-2">
         {event ? (
-          <li className="bg-gray-800 p-2 rounded-2xl flex items-center gap-2">
+          <li className="bg-gray-800/80 backdrop-blur-3xl p-2 rounded-2xl flex items-center gap-2">
             {event.name === "agent.tool_started" && (
               <div className="h-3 w-3 bg-green-400 rounded-full animate-caret-blink"></div>
             )}

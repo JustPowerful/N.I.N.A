@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Send } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useChatStore } from "@/stores/chatStore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatSelectBtn from "./_components/chat-select-btn";
 import CreateSessionBtn from "./_components/create-session-btn";
 import Markdown from "react-markdown";
@@ -20,7 +20,37 @@ export default function Home() {
   } = useSessionStore();
 
   const [chatInput, setChatInput] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const { messages, fetchMessages, isLoading, sendMessage } = useChatStore();
+
+  const handleSendMessage = async () => {
+    if (!chatInput || !currentSessionId || isLoading) {
+      return;
+    }
+
+    const message = chatInput;
+    setChatInput("");
+    resizeTextarea();
+
+    await sendMessage(currentSessionId, message);
+  };
+
+  const resizeTextarea = () => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const computedStyles = window.getComputedStyle(textarea);
+    const lineHeight = Number.parseFloat(computedStyles.lineHeight || "24");
+    const maxHeight = lineHeight * 5;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  };
 
   useEffect(() => {
     fetchSessions();
@@ -31,6 +61,10 @@ export default function Home() {
       fetchMessages(currentSessionId);
     }
   }, [currentSessionId, fetchMessages]);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [chatInput]);
 
   return (
     <div className="grid h-screen grid-cols-[1fr_4fr] overflow-hidden">
@@ -71,22 +105,28 @@ export default function Home() {
           </div>
         </div>
         <div className="absolute bottom-2 left-0 right-0 mx-5 flex gap-2 rounded-3xl bg-zinc-800 px-2 py-1">
-          <input
-            className="flex-1 bg-transparent border-none outline-none text-white"
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            className="flex-1 border-none outline-none text-white resize-none overflow-y-hidden leading-6 bg-transparent"
             placeholder="write your prompt here..."
             value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
+            onChange={(e) => {
+              setChatInput(e.target.value);
+              resizeTextarea();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void handleSendMessage();
+              }
+            }}
           />
           <Button
             variant="secondary"
             className="rounded-full w-10 h-10 p-0 flex items-center justify-center"
             onClick={() => {
-              if (chatInput && currentSessionId) {
-                sendMessage(currentSessionId, chatInput).then(() => {
-                  setChatInput("");
-                });
-                setChatInput("");
-              }
+              void handleSendMessage();
             }}
           >
             {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
