@@ -9,7 +9,7 @@ import SseEventTracker from "./sse-event-tracker";
 
 const ChatContainer = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="relative flex min-h-0 flex-col overflow-hidden">
+    <div className="relative flex min-h-0 flex-col overflow-hidden flex-1">
       {children}
     </div>
   );
@@ -45,7 +45,7 @@ const ChatSection = () => {
   return (
     <ChatContainer>
       {/* Sessin title section */}
-      <div className="m-4 p-4 rounded-md flex gap-2 items-center bg-gray-800/80 text-white absolute top-0 left-0 right-0 z-10 backdrop-blur-md">
+      <div className=" m-4 p-4 rounded-md flex gap-2 items-center bg-gray-800/80 text-white absolute top-0 left-0 right-0 z-10 backdrop-blur-md">
         <MessageCircleIcon />
         {currentSessionId && <p>{currentSessionTitle}</p>}
       </div>
