@@ -1,13 +1,19 @@
-from playwright.async_api import Playwright, BrowserContext, async_playwright
+from playwright.async_api import Playwright, BrowserContext, async_playwright, Browser
 from pathlib import Path
 from .session import BrowserSession
+from seleniumbase import sb_cdp
+from seleniumbase.undetected.cdp_driver import cdp_util
 
 class BrowserManager:
     def __init__(self) -> None:
         self.playwright: Playwright | None = None
+        self.browser: Browser | None = None
         self.context: BrowserContext | None = None
         self.session: BrowserSession | None = None
         self.profile_path = Path("./data/browser_profile")
+
+        # SeleniumBase CDP (Chrome DevTools Protocol) integration
+        self.sb = None
 
     async def start(self):
         if self.session is not None:
@@ -18,11 +24,21 @@ class BrowserManager:
             exist_ok=True
         )
 
-        self.playwright = await async_playwright().start()
-        self.context = await self.playwright.chromium.launch_persistent_context(
+        self.sb = await cdp_util.start_async(
             user_data_dir=str(self.profile_path),
-            headless=False
         )
+
+        self.playwright = await async_playwright().start()
+        
+
+        endpoint_url = self.sb.get_endpoint_url()
+
+        self.browser = await self.playwright.chromium.connect_over_cdp(
+            endpoint_url=endpoint_url,
+            timeout=60000  # Set a timeout of 60 seconds
+        )
+
+        self.context = self.browser.contexts[0]
 
         if self.context.pages:
             page = self.context.pages[0]
