@@ -19,7 +19,7 @@ type SessionStore = {
   currentSessionTitle: string | null;
   setCurrentSession: (sessionId: string, currentSessionTitle: string) => void;
   deleteSession: (sessionId: string) => Promise<void>;
-  createSession: (sessionTitle: string) => Promise<void>;
+  createSession: (sessionTitle: string) => Promise<string | undefined>;
 };
 
 export const useSessionStore = create<SessionStore>((set) => ({
@@ -90,6 +90,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
           { id: response.data.session_id, title: sessionTitle },
         ],
       }));
+      return response.data.session_id;
     } catch (error) {
       set({
         isError: true,

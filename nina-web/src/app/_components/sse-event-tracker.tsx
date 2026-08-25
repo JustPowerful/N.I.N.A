@@ -1,4 +1,5 @@
 import api from "@/lib/api/axios-instance";
+import { useSessionStore } from "@/stores/sessionStore";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -9,7 +10,8 @@ type AgentEventState =
   | "agent.tool_failed"
   | "agent.completed";
 
-const SseEventTracker = ({ sessionId }: { sessionId: string }) => {
+const SseEventTracker = () => {
+  const { currentSessionId: sessionId } = useSessionStore();
   const [event, setEvent] = useState<{
     name: AgentEventState;
     data: {
