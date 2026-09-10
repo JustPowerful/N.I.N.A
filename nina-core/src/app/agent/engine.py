@@ -71,8 +71,6 @@ class Agent:
             }
         )
 
-        
-
         result = tool.function(**parsed_arguments)
         if hasattr(result, "__await__"):
             result = await result

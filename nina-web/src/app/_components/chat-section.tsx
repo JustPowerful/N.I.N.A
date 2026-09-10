@@ -19,7 +19,7 @@ const ChatSection = () => {
   const { fetchSessions, currentSessionId, currentSessionTitle } =
     useSessionStore();
 
-  const { messages, fetchMessages, isLoading, sendMessage } = useChatStore();
+  const { messages, fetchMessages, sendMessage } = useChatStore();
 
   useEffect(() => {
     fetchSessions();
@@ -29,7 +29,7 @@ const ChatSection = () => {
     if (currentSessionId) {
       fetchMessages(currentSessionId);
     }
-  }, [currentSessionId, fetchMessages]);
+  }, [currentSessionId, fetchMessages, sendMessage]);
 
   if (!currentSessionId) {
     return (

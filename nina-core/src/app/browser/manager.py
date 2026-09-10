@@ -1,7 +1,6 @@
 from playwright.async_api import Playwright, BrowserContext, async_playwright, Browser
 from pathlib import Path
 from .session import BrowserSession
-from seleniumbase import sb_cdp
 from seleniumbase.undetected.cdp_driver import cdp_util
 
 class BrowserManager:

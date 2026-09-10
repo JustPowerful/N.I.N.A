@@ -23,7 +23,7 @@ class SessionService:
     # Fetching all sessions is useful for UI to display a list of sessions for the user to select from
     async def get_all_session(self) -> List[Session]:
         """Fetch all chat sessions."""
-        stmt = select(Session)
+        stmt = select(Session).order_by(Session.created_at.desc())
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 

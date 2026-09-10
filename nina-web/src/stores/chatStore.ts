@@ -51,6 +51,7 @@ export const useChatStore = create<MessageStore>((set) => ({
         isError: false,
         message: null,
       });
+      // push the user message to the messages array before sending it to the server
       set((state) => ({
         messages: [
           ...state.messages,
@@ -61,11 +62,16 @@ export const useChatStore = create<MessageStore>((set) => ({
           },
         ],
       }));
-      const response = await api.post<{ response: string }>("/chat/send", {
+      // send the message to the server to process and get the assistant's response
+      const response = await api.post<{
+        response: string;
+        audio: string | null;
+      }>("/chat/send", {
         session_id: sessionId,
         message: content,
       });
-      const chatResponse = response.data.response;
+      const chatResponse = response.data.response; // text response from the assistant
+      const audioResponse = response.data.audio; // base64 audio response from the assistant
       set((state) => ({
         messages: [
           ...state.messages,
@@ -77,6 +83,11 @@ export const useChatStore = create<MessageStore>((set) => ({
         ],
         message: response.data.response,
       }));
+      // play the audio response if it exists
+      if (audioResponse) {
+        const audio = new Audio(`data:audio/wav;base64,${audioResponse}`);
+        audio.play();
+      }
     } catch (error) {
       set({
         isError: true,

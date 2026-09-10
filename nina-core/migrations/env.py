@@ -13,6 +13,7 @@ from app.db.basemodel import Base
 # Import your models so they are registered in Base.metadata
 from app.knowledge.models import Knowledge
 from app.session.models import Session, ChatMessage
+from app.tasks.models import Task
 
 
 config = context.config

@@ -80,7 +80,13 @@ class BrowserTools:
         return [
             Tool(
                 name="open_url",
-                description="Open a URL in the browser and return a description of the loaded page.",
+                description=(
+                    "Navigate to a URL in the browser. "
+                    "IMPORTANT: Only use this when you actually need to navigate to a different URL. "
+                    "If the browser is already on the required page, DO NOT call this tool again. "
+                    "Use current_page instead to inspect the existing page and continue from it. "
+                    "Do not use this tool after a user manually completes a CAPTCHA or other verification."
+                ),
                 parameters={
                     "type": "object",
                     "properties": {

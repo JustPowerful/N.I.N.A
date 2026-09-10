@@ -1,4 +1,3 @@
-import asyncio
 import json
 
 from fastapi import APIRouter, Depends
@@ -8,6 +7,8 @@ from app.agent.state import AgentEvent
 from app.session.service import SessionService, get_session_service, MessageRole
 from pydantic import BaseModel
 from app.agent.eventmanager import event_manager
+from app.agent.voice import VoiceClient, get_voice_client
+import base64
 
 # Import ServerSentEvent from sse_starlette
 from sse_starlette import ServerSentEvent, EventSourceResponse
@@ -17,9 +18,11 @@ router = APIRouter(prefix='/chat', tags=['chat'])
 class ChatRequest(BaseModel):
     session_id: str
     message: str
+    generated_audio: bool = True  # Optional field to indicate if audio should be generated
 
 class ChatResponse(BaseModel):
     response: str
+    audio: str | None # Base64 encoded audio data that can be played in the frontend
 
 
 class GetMessagesResponse(BaseModel):
@@ -46,9 +49,19 @@ async def events(session_id: str):
 async def chat(
     request: ChatRequest,
     agent_service: AgentService = Depends(get_agent_service),
+    voice_service: VoiceClient = Depends(get_voice_client),
 ): 
     response = await agent_service.chat(message=request.message, session_uuid=request.session_id) 
-    return ChatResponse(response=response)
+    json_response = ChatResponse(response=response, audio=None)
+    if request.generated_audio:
+        if request.generated_audio:
+                audio_context = await voice_service.generate_tts(text=response, voice='en-US-EmmaNeural')
+                with audio_context as tts_response: 
+                    audio_bytes = tts_response.read() # Read the audio data from the response
+                    audio_b64_string = base64.b64encode(audio_bytes).decode('utf-8')
+                json_response.audio = audio_b64_string
+
+    return json_response
 
 
 @router.get("/getmessages/{session_id}", response_model=GetMessagesResponse)
