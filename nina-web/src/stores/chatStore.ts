@@ -13,16 +13,28 @@ type MessageStore = {
   isError: boolean;
   message: string | null;
 
+  assistantAudio: string | null;
+  clearAssistantAudio: () => void;
+
+  // for enabling or disabling the ability for the assistant to speak with the user
+  enableSpeech: boolean;
+  toggleSpeech: () => void;
+
   messages: Message[];
   fetchMessages: (sessionId: string) => Promise<void>;
 
   sendMessage: (sessionId: string, content: string) => Promise<void>;
 };
 
-export const useChatStore = create<MessageStore>((set) => ({
+export const useChatStore = create<MessageStore>((set, get) => ({
   isLoading: false,
   isError: false,
   message: null,
+  assistantAudio: null,
+  clearAssistantAudio: () => set({ assistantAudio: null }),
+
+  enableSpeech: true,
+  toggleSpeech: () => set((state) => ({ enableSpeech: !state.enableSpeech })),
 
   messages: [],
   fetchMessages: async (sessionId: string) => {
@@ -34,6 +46,7 @@ export const useChatStore = create<MessageStore>((set) => ({
       set({
         messages: response.data.messages,
         message: response.data.response,
+        assistantAudio: null,
       });
     } catch (err) {
       set({
@@ -63,12 +76,14 @@ export const useChatStore = create<MessageStore>((set) => ({
         ],
       }));
       // send the message to the server to process and get the assistant's response
+      // get the enableSpeech state
       const response = await api.post<{
         response: string;
         audio: string | null;
       }>("/chat/send", {
         session_id: sessionId,
         message: content,
+        generated_audio: get().enableSpeech,
       });
       const chatResponse = response.data.response; // text response from the assistant
       const audioResponse = response.data.audio; // base64 audio response from the assistant
@@ -82,12 +97,10 @@ export const useChatStore = create<MessageStore>((set) => ({
           },
         ],
         message: response.data.response,
+        assistantAudio: audioResponse,
       }));
       // play the audio response if it exists
-      if (audioResponse) {
-        const audio = new Audio(`data:audio/wav;base64,${audioResponse}`);
-        audio.play();
-      }
+      // audio playback is handled by the visualizer component
     } catch (error) {
       set({
         isError: true,
