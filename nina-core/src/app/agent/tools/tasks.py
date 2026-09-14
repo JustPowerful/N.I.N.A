@@ -133,10 +133,14 @@ class TasksTools:
                 description='Retrieve a task by its ID',
                 function=self.get_task,
                 parameters={
-                    "task_id": {
-                        "type": "integer",
-                        "description": "The ID of the task to be retrieved."
-                    }
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "integer",
+                            "description": "The ID of the task to be retrieved."
+                        }
+                    },
+                    "required": ["task_id"]
                 }
             ),
             Tool(
@@ -144,21 +148,24 @@ class TasksTools:
                 description='Search for tasks based on various criteria',
                 function=self.search_tasks,
                 parameters={
-                    "title": {
-                        "type": "string",
-                        "description": "The title of the task (optional)."
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "The description of the task (optional)."
-                    },
-                    "start_date": {
-                        "type": "string",
-                        "description": "The start date of the task (optional)."
-                    },
-                    "end_date": {
-                        "type": "string",
-                        "description": "The end date of the task (optional)."
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the task (optional)."
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "The description of the task (optional)."
+                        },
+                        "start_date": {
+                            "type": "string",
+                            "description": "The start date of the task (optional)."
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "The end date of the task (optional)."
+                        }
                     }
                 }
             ),
@@ -167,22 +174,26 @@ class TasksTools:
                 description='Create a new task',
                 function=self.create_task,
                 parameters={
-                    "title": {
-                        "type": "string",
-                        "description": "The title of the task."
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the task."
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "The description of the task. (optional)"
+                        },
+                        "start_date": {
+                            "type": "string",
+                            "description": "The start date of the task (optional)."
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "The end date of the task (optional)."
+                        }
                     },
-                    "description": {
-                        "type": "string",
-                        "description": "The description of the task. (optional)"
-                    },
-                    "start_date": {
-                        "type": "string",
-                        "description": "The start date of the task (optional)."
-                    },
-                    "end_date": {
-                        "type": "string",
-                        "description": "The end date of the task (optional)."
-                    }
+                    "required": ["title"]
                 }
             ),
             Tool(
@@ -190,10 +201,14 @@ class TasksTools:
                 description='Delete a task by its ID',
                 function=self.delete_task,
                 parameters={
-                    "task_id": {
-                        "type": "integer",
-                        "description": "The ID of the task to be deleted."
-                    }
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "integer",
+                            "description": "The ID of the task to be deleted."
+                        }
+                    },
+                    "required": ["task_id"]
                 }
             ),
             Tool(
@@ -201,26 +216,30 @@ class TasksTools:
                 description='Update a task by its ID',
                 function=self.update_task,
                 parameters={
-                    "task_id": {
-                        "type": "integer",
-                        "description": "The ID of the task to be updated."
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "integer",
+                            "description": "The ID of the task to be updated."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The new title of the task (optional)."
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "The new description of the task (optional)."
+                        },
+                        "start_date": {
+                            "type": "string",
+                            "description": "The new start date of the task (optional)."
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "The new end date of the task (optional)."
+                        }
                     },
-                    "title": {
-                        "type": "string",
-                        "description": "The new title of the task (optional)."
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "The new description of the task (optional)."
-                    },
-                    "start_date": {
-                        "type": "string",
-                        "description": "The new start date of the task (optional)."
-                    },
-                    "end_date": {
-                        "type": "string",
-                        "description": "The new end date of the task (optional)."
-                    }
+                    "required": ["task_id"]
                 }
             )
         ]

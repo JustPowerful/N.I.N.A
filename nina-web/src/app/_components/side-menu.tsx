@@ -35,7 +35,7 @@ const SideMenu = () => {
         </Button>
       </div>
 
-      <h1 className="font-bold text-xl">N.I.N.A AI Agent</h1>
+      <h1 className="font-bold text-xl">Menu</h1>
       <p className="mb-4">Browse chat sessions</p>
 
       <CreateSessionBtn />

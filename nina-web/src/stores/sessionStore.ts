@@ -86,8 +86,8 @@ export const useSessionStore = create<SessionStore>((set) => ({
       set((state) => ({
         message: response.data.response,
         currentSessions: [
-          ...state.currentSessions,
           { id: response.data.session_id, title: sessionTitle },
+          ...state.currentSessions,
         ],
       }));
       return response.data.session_id;

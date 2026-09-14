@@ -51,11 +51,15 @@ async def chat(
     agent_service: AgentService = Depends(get_agent_service),
     voice_service: VoiceClient = Depends(get_voice_client),
 ): 
-    response = await agent_service.chat(message=request.message, session_uuid=request.session_id) 
+    # The response is split into two parts:
+    # 1. The text response from the agent.
+    # 2. The audio response generated from the text response (if requested).
+    (response, voice_text_response) = await agent_service.chat(message=request.message, session_uuid=request.session_id, is_voice_response=request.generated_audio) 
     json_response = ChatResponse(response=response, audio=None)
+    
     if request.generated_audio:
-        if request.generated_audio:
-                audio_context = await voice_service.generate_tts(text=response, voice='en-US-EmmaNeural')
+            if voice_text_response:
+                audio_context = await voice_service.generate_tts(text=voice_text_response, voice='en-US-EmmaNeural')
                 with audio_context as tts_response: 
                     audio_bytes = tts_response.read() # Read the audio data from the response
                     audio_b64_string = base64.b64encode(audio_bytes).decode('utf-8')

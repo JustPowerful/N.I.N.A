@@ -6,6 +6,28 @@ from google.auth.external_account_authorized_user import Credentials as External
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+tzinfo = ZoneInfo("Africa/Tunis")
+TIMEZONE_NAME = tzinfo.key
+
+
+def _to_timezone_iso(value: datetime) -> str:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=tzinfo)
+    else:
+        value = value.astimezone(tzinfo)
+    return value.isoformat()
+
+
+def _normalize_datetime(value: datetime | str) -> datetime:
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value)
+
+    if value.tzinfo is None:
+        return value.replace(tzinfo=tzinfo)
+
+    return value.astimezone(tzinfo)
 
 class CalendarService:
     SCOPES = [
@@ -65,13 +87,17 @@ class CalendarService:
     
             return credentials
 
-    def search_events(self, time_min: datetime, time_max: datetime, query: str = "", max_results: int = 50, calendar_id: str = "primary"):
+    def search_events(self, time_min: datetime | str, time_max: datetime | str, query: str = "", max_results: int = 50, calendar_id: str = "primary"):
         """Search for events in the specified calendar."""
+
+        time_min = _to_timezone_iso(_normalize_datetime(time_min))
+        time_max = _to_timezone_iso(_normalize_datetime(time_max))
+
         events_result = self.service.events().list(
             calendarId=calendar_id,
             q=query,
-            timeMin=time_min.isoformat(),
-            timeMax=time_max.isoformat(),
+            timeMin=time_min,
+            timeMax=time_max,
             singleEvents=True,
             orderBy='startTime',
             maxResults=max_results
@@ -88,10 +114,11 @@ class CalendarService:
 
     def create_event(self, summary: str, start: datetime, end: datetime, description: str | None = None, location: str | None = None, attendees: list[str] | None = None, calendar_id: str = "primary"):
         """Create a new event in the specified calendar."""
+        
         event_body = {
             "summary": summary,
-            "start": {"dateTime": start.isoformat(), "timeZone": "UTC"},
-            "end": {"dateTime": end.isoformat(), "timeZone": "UTC"},
+            "start": {"dateTime": _to_timezone_iso(start), "timeZone": TIMEZONE_NAME},
+            "end": {"dateTime": _to_timezone_iso(end), "timeZone": TIMEZONE_NAME},
         }
         if description:
             event_body["description"] = description
@@ -132,12 +159,14 @@ class CalendarService:
 
         if start is not None:
             event["start"] = {
-                "dateTime": start.isoformat(),
+                "dateTime": _to_timezone_iso(start),
+                "timeZone": TIMEZONE_NAME,
             }
 
         if end is not None:
             event["end"] = {
-                "dateTime": end.isoformat(),
+                "dateTime": _to_timezone_iso(end),
+                "timeZone": TIMEZONE_NAME,
             }
 
         return (
@@ -168,16 +197,16 @@ class CalendarService:
 
     async def check_availability(
         self,
-        time_min: datetime,
-        time_max: datetime,
+        time_min: datetime | str,
+        time_max: datetime | str,
         calendar_id: str = "primary",
     ) -> list[dict[str, Any]]:
         response = (
             self.service.freebusy()
             .query(
                 body={
-                    "timeMin": time_min.isoformat(),
-                    "timeMax": time_max.isoformat(),
+                    "timeMin": _to_timezone_iso(_normalize_datetime(time_min)),
+                    "timeMax": _to_timezone_iso(_normalize_datetime(time_max)),
                     "items": [
                         {
                             "id": calendar_id,

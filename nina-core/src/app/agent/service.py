@@ -45,7 +45,8 @@ class AgentService:
         self,
         message: str,
         session_uuid: str,
-    ) -> str:
+        is_voice_response: bool = False,
+    ) -> tuple[str, str | None]:
 
         print(
             "[DEBUG] AgentService.chat called with message:",
@@ -147,8 +148,11 @@ class AgentService:
             content=result,
         )
 
-        return result
+        voice_response = None
+        if is_voice_response:
+            voice_response = await agent.humanize_for_voice(result)
 
+        return (result, voice_response)
 
 async def get_agent_service(
     session: AsyncSession = Depends(get_session),

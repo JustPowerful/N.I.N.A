@@ -12,6 +12,18 @@ import {
 
 import { Loader2, Trash } from "lucide-react";
 
+/**
+ * Utility function to cut the string to a certain limit and add ellipsis if it exceeds the limit.
+ * @param str The string to be cut.
+ * @param limit The limit of the string length.
+ */
+function cutString(str: string, limit: number): string {
+  if (str.length > limit) {
+    return str.substring(0, limit) + "...";
+  }
+  return str;
+}
+
 const ChatSelectBtn = ({ session }: { session: Session }) => {
   /**
    * This component is used in the session chat selection on the side menu.
@@ -29,7 +41,7 @@ const ChatSelectBtn = ({ session }: { session: Session }) => {
             setCurrentSession(session.id, session.title);
           }}
         >
-          {session.title}
+          {cutString(session.title, 20)}
         </Button>
         <Button
           variant="destructive"

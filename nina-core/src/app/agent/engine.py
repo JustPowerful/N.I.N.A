@@ -1,7 +1,9 @@
 from openai import AsyncOpenAI
 from app.agent.state import AgentState, AgentEvent, AgentEventState
 from app.config import settings
-from openai.types.responses import ResponseInputParam
+from openai.types.chat import ChatCompletionMessageParam
+from typing import cast
+from zoneinfo import ZoneInfo
 
 from app.agent.tools.registery import ToolsRegistery
 import json
@@ -18,7 +20,7 @@ class Agent:
 
 
     def get_instructions(self) -> str:
-        now = datetime.now().astimezone()
+        now = datetime.now(ZoneInfo("Africa/Tunis"))
 
         return f"""
             You are NINA, a personal AI assistant.
@@ -190,77 +192,128 @@ class Agent:
 
     def get_openai_tools(self) -> list:
         return [
-        {
-            "type": "function",
-            "name": tool.name,
-            "description": tool.description,
-            "parameters": tool.parameters
-        }
-        for tool in self.tools
+            {
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.parameters,
+                },
+            }
+            for tool in self.tools
         ]
     
 
     async def run(self, state: AgentState, event_handler=None) -> str:
         
         print("[DEBUG] Agent.run called with state:", state)
-        input_messages: ResponseInputParam = [
-            {
-                "role": message.role,
-                "content": message.content
-            } for message in state.messages
+
+        input_messages: list[ChatCompletionMessageParam] = [
+            cast(ChatCompletionMessageParam, {
+                "role": "system",
+                "content": self.get_instructions()
+            })
         ]
+
+        input_messages.extend([
+            cast(ChatCompletionMessageParam, {
+                "role": message.role,
+                "content": message.content  })
+            for message in state.messages
+        ])
 
         now = datetime.now().astimezone()
 
-        response = await self.client.responses.create(
+        response = await self.client.chat.completions.create(
             model=settings.model,
+            messages=input_messages,
             tools=self.get_openai_tools(),
-            instructions=self.get_instructions(),
-            input=input_messages
         )
-
-        
 
         print("[DEBUG] checking if tool call is present in the response")
 
         while True:
             tool_calls = [
-                item
-                for item in response.output 
-                if item.type == "function_call"
+                tool_call
+                for tool_call in response.choices[0].message.tool_calls or []
+                if tool_call.type == "function"
             ]
 
             if not tool_calls:
-                return response.output_text
+                return response.choices[0].message.content or ""
+
+            tool_call_payload = [
+                {
+                    "id": tool_call.id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments,
+                    },
+                }
+                for tool_call in tool_calls
+            ]
+
+            input_messages.append(
+                cast(
+                    ChatCompletionMessageParam,
+                    {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": tool_call_payload,
+                    },
+                )
+            )
 
             for tool_call in tool_calls:
-
-                input_messages.append({
-                    "type": "function_call",
-                    "call_id": tool_call.call_id,
-                    "name": tool_call.name,
-                    "arguments": tool_call.arguments,
-                })
-
                 result = await self.execute_tool(
-                                    tool_name=tool_call.name,
-                                    arguments=tool_call.arguments,
-                                    call_id=tool_call.call_id,
-                                    event_handler=event_handler
-                                )
-
-                input_messages.append({
-                    "type": "function_call_output",
-                    "call_id": tool_call.call_id,
-                    "output": json.dumps(result),
-                })
-
-                response = await self.client.responses.create(
-                    model=settings.model,
-                    tools=self.get_openai_tools(),
-                    instructions=self.get_instructions(),
-                    input=input_messages
+                    tool_name=tool_call.function.name,
+                    arguments=tool_call.function.arguments,
+                    call_id=tool_call.id,
+                    event_handler=event_handler,
                 )
 
+                input_messages.append(
+                    cast(
+                        ChatCompletionMessageParam,
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(result),
+                        },
+                    )
+                )
+
+            response = await self.client.chat.completions.create(
+                model=settings.model,
+                messages=input_messages,
+                tools=self.get_openai_tools(),
+            )
+
+    async def humanize_for_voice(self, text: str) -> str:
+        """Convert text to a more human-friendly format for voice output."""
+        prompt = f"""
+        Humanize the text in quotes for voice output according to the following rules:
+         1. Put the text in a single, natural-sounding paragraph.
+         2. Use commas and periods to break up long sentences.
+         3. Avoid overly formal or technical language; make it sound conversational.
+         4. Remove any unnecessary filler words, phrases or punctuation.
+
+         Text: "{text}"
+        """
+        response = await self.client.chat.completions.create(
+            model=settings.model,
+            messages=[
+                cast(ChatCompletionMessageParam, {
+                    "role": "system",
+                    "content": "You are a helpful assistant that humanizes text for voice output."
+                }),
+                cast(ChatCompletionMessageParam, {
+                    "role": "user",
+                    "content": prompt
+                })
+            ]
+        )
+        return response.choices[0].message.content or ""
 def get_agent(tools_registery: ToolsRegistery):
     return Agent(tools_registery=tools_registery)
